@@ -19,7 +19,7 @@ def get_draft_data(patch):
         'Team2Ban1', 'Team2Ban2', 'Team2Ban3', 'Team2Ban4', 'Team2Ban5',
         'Team2Pick1', 'Team2Pick2', 'Team2Pick3', 'Team2Pick4', 'Team2Pick5',
         'Team1', 'Team2', 'Winner', 'Team1Score', 'Team2Score',
-        'Team1PicksByRoleOrder', 'Team2PicksByRoleOrder'
+        'Team1PicksByRoleOrder', 'Team2PicksByRoleOrder', 'OverviewPage'
     ]
     fields = ", ".join(
         [f"PAB.{column}" for column in PABcolumns] + ["SG.Patch", "SG.Winner", "SG.Team1Score", "SG.Team2Score"]
@@ -74,7 +74,6 @@ def calculate_champion_stats(df, champion_filter=None):
                 'red_side_avg_pick_pos': 0,
                 'blue_side_pick_count': 0,
                 'red_side_pick_count': 0,
-                'avg_pick_pos': 0,
                 'blue_side_win_count': 0,
                 'red_side_win_count': 0,
                 'blue_side_winrate': 0,
@@ -127,8 +126,54 @@ def calculate_champion_stats(df, champion_filter=None):
 
     # Create a DataFrame with the filtered champion's stats if a champion_filter is provided
     if champion_filter:
-        stats_df = pd.DataFrame([champion_stats[champion_filter]])
+        stats_df = pd.DataFrame([champion_stats.get(champion_filter, {})])
     else:
         stats_df = pd.DataFrame(champion_stats.values())
 
     return stats_df
+
+
+def get_counterpicks(df, champion_name):
+    """
+    Get counterpicks against a specified champion.
+    """
+    counterpicks_details = []
+
+    for index, row in df.iterrows():
+        team1_picks = row['Team1PicksByRoleOrder'].split(',')
+        team2_picks = row['Team2PicksByRoleOrder'].split(',')
+        winner = row['Winner']
+        team1_name = row['Team1']  # Assuming 'Team1' contains team name
+        team2_name = row['Team2']  # Assuming 'Team2' contains team name
+
+        if champion_name in team1_picks:
+            position = team1_picks.index(champion_name)
+            searched_champion_full_comp = team1_picks[:]
+            opponent_full_comp = team2_picks[:]
+
+            counterpicks_details.append({
+                'Champion': f"{champion_name}",
+                'Team': team2_name, # Team2 is the opponent
+                'Tournament': row['OverviewPage'],  
+                'Result': 'Win' if winner == "1" else 'Loss',
+                f'{champion_name} Full Comp': searched_champion_full_comp,
+                f'{team2_picks[position]} Full Comp': opponent_full_comp,
+                'Winner': champion_name if winner == "1" else team2_picks[position]
+            })
+        elif champion_name in team2_picks:
+            position = team2_picks.index(champion_name)
+            searched_champion_full_comp = team2_picks[:]
+            opponent_full_comp = team1_picks[:]
+
+            counterpicks_details.append({
+                'Champion': f"{champion_name} [{team2_name}-{row['OverviewPage']}]",
+                'Result': 'Win' if winner == "2" else 'Loss',
+                'Team': team1_name, # Team1 is the opponent
+                'Tournament': row['OverviewPage'],  
+                f'{champion_name} Full Comp': searched_champion_full_comp,
+                f'{team1_picks[position]} Full Comp': opponent_full_comp,
+                'Winner': champion_name if winner == "2" else team1_picks[position]
+            })
+
+    return counterpicks_details
+

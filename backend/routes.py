@@ -1,6 +1,6 @@
 from flask import request, jsonify
 from flask_restx import Namespace, Resource
-from services import get_draft_data, calculate_champion_stats
+from services import get_counterpicks, get_draft_data, calculate_champion_stats
 from models import champion_stats_model
 import pandas as pd
 # Namespace for esports related operations
@@ -47,3 +47,25 @@ class ChampionStats(Resource):
             return {"error": "No statistics found for the given champion"}, 404
 
         return jsonify(stats_df.to_dict(orient='records'))
+    
+@ns.route('/counterpicks/<string:champion_name>')
+@ns.param('champion_name', 'The name of the champion to find counterpicks against')
+class Counterpicks(Resource):
+    @ns.doc('list_counterpicks')
+    @ns.param('patch', 'The patch version to filter matches', required=True)
+    def get(self, champion_name):
+        patch = request.args.get('patch')
+
+        try:
+            draft_data = get_draft_data(patch)
+        except Exception as e:
+            return {"error": str(e)}, 500
+
+        if draft_data.empty:
+            return {"error": "No draft data found for the given patch"}, 404
+
+        counterpicks = get_counterpicks(draft_data, champion_name)
+        if not counterpicks:
+            return {"error": f"No counterpicks found for {champion_name}"}, 404
+
+        return jsonify(counterpicks)
