@@ -152,7 +152,8 @@ def get_counterpicks(df, champion_name):
             opponent_full_comp = team2_picks[:]
 
             counterpicks_details.append({
-                'Champion': f"{champion_name}",
+                'Searched champion': f"{champion_name}",
+                'Champion': f"{team2_picks[position]}",
                 'Team': team2_name, # Team2 is the opponent
                 'Tournament': row['OverviewPage'],  
                 'Result': 'Win' if winner == "1" else 'Loss',
@@ -166,7 +167,8 @@ def get_counterpicks(df, champion_name):
             opponent_full_comp = team1_picks[:]
 
             counterpicks_details.append({
-                'Champion': f"{champion_name} [{team2_name}-{row['OverviewPage']}]",
+                'Searched champion': f"{champion_name}",
+                'Champion': f"{team1_picks[position]} [{team2_name}-{row['OverviewPage']}]",
                 'Result': 'Win' if winner == "2" else 'Loss',
                 'Team': team1_name, # Team1 is the opponent
                 'Tournament': row['OverviewPage'],  
