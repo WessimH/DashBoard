@@ -10,3 +10,5 @@ services:
       - ./backend:/app
     environment:
       FLASK_ENV: development
+      FLASK_APP: app.py
+      FLASK_RUN_HOST: 0.0.0.0

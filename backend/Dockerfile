@@ -18,4 +18,4 @@ ENV FLASK_APP=app.py
 ENV FLASK_RUN_HOST=0.0.0.0
 
 # Run flask when the container launches
-CMD ["flask", "run"]
+CMD ["flask", "run", "--reload"]
