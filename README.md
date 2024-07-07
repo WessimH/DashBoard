@@ -55,7 +55,7 @@ your_project/
 1. Clone the repository:
 
 ```sh
-git clone https://github.com/yourusername/your_project.git
+git clone https://github.com/WessimH/DashBoard.git
 cd your_project
 ```
 
