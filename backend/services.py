@@ -35,6 +35,7 @@ def get_draft_data(patch):
         limit="max"
     )
 
+    # Convert the response to a DataFrame
     df = pd.DataFrame(DraftData)
     return df
 
@@ -53,6 +54,17 @@ def calculate_champion_stats(df, champion_filter=None):
     champion_stats = {}
 
     def update_stats(champion, side, role, position, is_pick, is_winner):
+        """
+        Update the statistics for a specific champion.
+
+        Parameters:
+        - champion (str): The name of the champion.
+        - side (str): The side (blue/red) the champion was picked on.
+        - role (str): The role of the champion.
+        - position (int): The pick position.
+        - is_pick (bool): Whether the champion was picked.
+        - is_winner (bool): Whether the champion's team won the game.
+        """
         if champion not in champion_stats:
             champion_stats[champion] = {
                 'champion': champion,
@@ -80,6 +92,7 @@ def calculate_champion_stats(df, champion_filter=None):
                 stats['red_side_avg_pick_pos'] += position
                 stats['red_side_pick_pct'] += 1
 
+    total_games = len(df)
     for index, row in df.iterrows():
         winner = row['Winner']
         for i in range(1, 6):
@@ -98,6 +111,7 @@ def calculate_champion_stats(df, champion_filter=None):
                 stats['red_side_avg_pick_pos'] = round(stats['red_side_avg_pick_pos'] / stats['red_side_pick_pct'], 1)
                 stats['red_side_pick_pct'] = round((stats['red_side_pick_pct'] / stats['games_played']) * 100, 3)
 
+    # Create a DataFrame with the filtered champion's stats if a champion_filter is provided
     if champion_filter:
         stats_df = pd.DataFrame([champion_stats[champion_filter]])
     else:

@@ -3,7 +3,7 @@ from flask_restx import Namespace, Resource
 from services import get_draft_data, calculate_champion_stats
 from models import champion_stats_model
 import pandas as pd
-# Namespace
+# Namespace for esports related operations
 ns = Namespace('esports', description='LoL Esports operations')
 
 @ns.route('/drafts/<string:patch>')
