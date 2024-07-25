@@ -60,7 +60,7 @@ def calculate_champion_stats(df, champion_filter=None):
         - champion (str): The name of the champion.
         - side (str): The side (blue/red) the champion was picked on.
         - role (str): The role of the champion.
-        - position (int): The pick position.
+        - position (float): The pick position.
         - is_pick (bool): Whether the champion was picked.
         - is_winner (bool): Whether the champion's team won the game.
         """
@@ -78,10 +78,12 @@ def calculate_champion_stats(df, champion_filter=None):
                 'red_side_win_count': 0,
                 'blue_side_winrate': 0,
                 'red_side_winrate': 0,
+                'avg_pick_pos': 0 ,
                 'winrate': 0
             }
 
         stats = champion_stats[champion]
+
         stats['games_played'] += 1
         if is_winner:
             stats['win_count'] += 1
