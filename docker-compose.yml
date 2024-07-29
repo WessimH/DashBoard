@@ -12,3 +12,21 @@ services:
       FLASK_ENV: development
       FLASK_APP: app.py
       FLASK_RUN_HOST: 0.0.0.0
+  app-postgres: 
+    image: postgis/postgis:13-3.1-alpine
+    container_name: app-postgis
+    restart: unless-stopped
+    networks:
+      - proxy
+    environment:
+      - POSTGRES_PASSWORD=ec_EP*2K(22)
+      - TZ=Europe/Rome
+      - PGTZ=Europe/Rome
+    ports:
+      - 5342:5342
+    volumes:
+      - ./volumes/ec/postgres/data:/var/lib/postgresql/data
+networks:
+  proxy:
+    external: true
+
