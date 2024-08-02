@@ -65,7 +65,10 @@ def calculate_champion_stats(df, champion_filter=None):
         - is_winner (bool): Whether the champion's team won the game.
         """
         if champion not in champion_stats:
-            champion_stats[champion] = {
+            champion_stats[champion] = {}
+
+        if role not in champion_stats[champion]:
+            champion_stats[champion][role] = {
                 'champion': champion,
                 'role': role,
                 'games_played': 0,
@@ -78,11 +81,11 @@ def calculate_champion_stats(df, champion_filter=None):
                 'red_side_win_count': 0,
                 'blue_side_winrate': 0,
                 'red_side_winrate': 0,
-                'avg_pick_pos': 0 ,
+                'avg_pick_pos': 0,
                 'winrate': 0
             }
 
-        stats = champion_stats[champion]
+        stats = champion_stats[champion][role]
 
         stats['games_played'] += 1
         if is_winner:
@@ -115,22 +118,23 @@ def calculate_champion_stats(df, champion_filter=None):
             update_stats(team1_pick, 'blue', team1_role, i, True, team1_winner)
             update_stats(team2_pick, 'red', team2_role, i, True, team2_winner)
 
-    for stats in champion_stats.values():
-        if stats['games_played'] > 0:
-            stats['winrate'] = round((stats['win_count'] / stats['games_played']) * 100, 2)
-            stats['avg_pick_pos'] = round(stats['avg_pick_pos'] / stats['games_played'], 1)
-            if stats['blue_side_pick_count'] > 0:
-                stats['blue_side_avg_pick_pos'] = round(stats['blue_side_avg_pick_pos'] / stats['blue_side_pick_count'], 1)
-                stats['blue_side_winrate'] = round((stats['blue_side_win_count'] / stats['blue_side_pick_count']) * 100, 2)
-            if stats['red_side_pick_count'] > 0:
-                stats['red_side_avg_pick_pos'] = round(stats['red_side_avg_pick_pos'] / stats['red_side_pick_count'], 1)
-                stats['red_side_winrate'] = round((stats['red_side_win_count'] / stats['red_side_pick_count']) * 100, 2)
+    for champion, roles in champion_stats.items():
+        for role, stats in roles.items():
+            if stats['games_played'] > 0:
+                stats['winrate'] = round((stats['win_count'] / stats['games_played']) * 100, 2)
+                stats['avg_pick_pos'] = round(stats['avg_pick_pos'] / stats['games_played'], 1)
+                if stats['blue_side_pick_count'] > 0:
+                    stats['blue_side_avg_pick_pos'] = round(stats['blue_side_avg_pick_pos'] / stats['blue_side_pick_count'], 1)
+                    stats['blue_side_winrate'] = round((stats['blue_side_win_count'] / stats['blue_side_pick_count']) * 100, 2)
+                if stats['red_side_pick_count'] > 0:
+                    stats['red_side_avg_pick_pos'] = round(stats['red_side_avg_pick_pos'] / stats['red_side_pick_count'], 1)
+                    stats['red_side_winrate'] = round((stats['red_side_win_count'] / stats['red_side_pick_count']) * 100, 2)
 
     # Create a DataFrame with the filtered champion's stats if a champion_filter is provided
     if champion_filter:
-        stats_df = pd.DataFrame([champion_stats.get(champion_filter, {})])
+        stats_df = pd.DataFrame([role_stats for role_stats in champion_stats.get(champion_filter, {}).values()])
     else:
-        stats_df = pd.DataFrame(champion_stats.values())
+        stats_df = pd.DataFrame([role_stats for roles in champion_stats.values() for role_stats in roles.values()])
 
     return stats_df
 
@@ -142,8 +146,16 @@ def get_counterpicks(df, champion_name):
     counterpicks_details = []
 
     for index, row in df.iterrows():
-        team1_picks = row['Team1PicksByRoleOrder'].split(',')
-        team2_picks = row['Team2PicksByRoleOrder'].split(',')
+        team1_picks = row['Team1PicksByRoleOrder']
+        team2_picks = row['Team2PicksByRoleOrder']
+
+        # Check if the picks are None before calling split
+        if team1_picks is None or team2_picks is None:
+            continue
+
+        team1_picks = team1_picks.split(',')
+        team2_picks = team2_picks.split(',')
+
         winner = row['Winner']
         team1_name = row['Team1']  # Assuming 'Team1' contains team name
         team2_name = row['Team2']  # Assuming 'Team2' contains team name
@@ -156,8 +168,8 @@ def get_counterpicks(df, champion_name):
             counterpicks_details.append({
                 'Searched champion': f"{champion_name}",
                 'Champion': f"{team2_picks[position]}",
-                'Team': team2_name, # Team2 is the opponent
-                'Tournament': row['OverviewPage'],  
+                'Team': team2_name,  # Team2 is the opponent
+                'Tournament': row['OverviewPage'],
                 'Result': 'Win' if winner == "1" else 'Loss',
                 f'{champion_name} Full Comp': searched_champion_full_comp,
                 f'{team2_picks[position]} Full Comp': opponent_full_comp,
@@ -172,12 +184,11 @@ def get_counterpicks(df, champion_name):
                 'Searched champion': f"{champion_name}",
                 'Champion': f"{team1_picks[position]} [{team2_name}-{row['OverviewPage']}]",
                 'Result': 'Win' if winner == "2" else 'Loss',
-                'Team': team1_name, # Team1 is the opponent
-                'Tournament': row['OverviewPage'],  
+                'Team': team1_name,  # Team1 is the opponent
+                'Tournament': row['OverviewPage'],
                 f'{champion_name} Full Comp': searched_champion_full_comp,
                 f'{team1_picks[position]} Full Comp': opponent_full_comp,
                 'Winner': champion_name if winner == "2" else team1_picks[position]
             })
 
     return counterpicks_details
-
